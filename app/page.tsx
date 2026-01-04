@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/command"
 import { Plus, Trash2, Calendar, Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
+import { Toaster } from "@/components/ui/toaster"
 
 interface Task {
   id: string
@@ -39,6 +41,7 @@ interface Employee {
 }
 
 export default function DailyWorkActivityForm() {
+  const { toast } = useToast()
   const [employeeName, setEmployeeName] = useState("")
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -46,7 +49,21 @@ export default function DailyWorkActivityForm() {
   const [searchQuery, setSearchQuery] = useState("")
   const [previousTasks, setPreviousTasks] = useState<string[]>([])
   const [taskDropdownsOpen, setTaskDropdownsOpen] = useState<Record<string, boolean>>({})
-  const todaysDate = new Date().toISOString().split("T")[0]
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  // Get today's date in IST (Indian Standard Time - UTC+5:30)
+  const getTodayInIST = () => {
+    const now = new Date()
+    // Get IST date components using Asia/Kolkata timezone
+    const istFormatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+    // Returns YYYY-MM-DD format directly
+    return istFormatter.format(now)
+  }
+  const todaysDate = getTodayInIST()
   const [tasks, setTasks] = useState<Task[]>([{ id: "1", projectName: "", taskName: "", outcomeLink: "", notes: "" }])
 
   useEffect(() => {
@@ -145,11 +162,41 @@ export default function DailyWorkActivityForm() {
     e.preventDefault()
     
     if (!selectedEmployee) {
-      alert("Please select an employee")
+      toast({
+        variant: "destructive",
+        title: "Employee Required",
+        description: "Please select an employee before submitting.",
+      })
       return
     }
 
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+      return
+    }
+
+    setIsSubmitting(true)
+
     try {
+      // Check if employee has already submitted tasks for today
+      const checkResponse = await fetch(`/api/work-activities?employeeId=${selectedEmployee._id}`)
+      if (checkResponse.ok) {
+        const checkData = await checkResponse.json()
+        const todayActivities = checkData.activities?.filter(
+          (activity: any) => activity.date === todaysDate
+        ) || []
+        
+        if (todayActivities.length > 0) {
+          setIsSubmitting(false)
+          toast({
+            variant: "destructive",
+            title: "Already Submitted",
+            description: "You have already submitted your tasks for today. Only one submission per day is allowed.",
+          })
+          return
+        }
+      }
+
       const response = await fetch("/api/work-activities", {
         method: "POST",
         headers: {
@@ -166,24 +213,40 @@ export default function DailyWorkActivityForm() {
       const data = await response.json()
 
       if (!response.ok) {
-        alert(data.error || "Failed to submit work activity")
+        setIsSubmitting(false)
+        toast({
+          variant: "destructive",
+          title: "Submission Failed",
+          description: data.error || "Failed to submit work activity. Please try again.",
+        })
         return
       }
 
-      alert("Work activity submitted successfully!")
+      toast({
+        title: "Success!",
+        description: "Your work activity has been submitted successfully.",
+      })
       
       // Reset form
       setSelectedEmployee(null)
       setEmployeeName("")
       setTasks([{ id: "1", projectName: "", taskName: "", outcomeLink: "", notes: "" }])
+      setIsSubmitting(false)
     } catch (error) {
-      alert("An error occurred. Please try again.")
+      setIsSubmitting(false)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An error occurred. Please try again.",
+      })
       console.error("Submission error:", error)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 p-4 md:p-8">
+    <>
+      <Toaster />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 p-4 md:p-8">
       <div className="mx-auto max-w-4xl">
         <Card className="border-2 border-blue-900 shadow-xl mb-8">
           <CardHeader className="bg-white p-3 md:p-4">
@@ -455,9 +518,10 @@ export default function DailyWorkActivityForm() {
               <div className="pt-4">
                 <Button
                   type="submit"
-                  className="w-full bg-slate-900 text-white hover:bg-slate-800 py-6 text-lg font-semibold"
+                  disabled={isSubmitting}
+                  className="w-full bg-slate-900 text-white hover:bg-slate-800 py-6 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Submit Daily Activity
+                  {isSubmitting ? "Submitting..." : "Submit Daily Activity"}
                 </Button>
               </div>
             </form>
@@ -465,5 +529,6 @@ export default function DailyWorkActivityForm() {
         </Card>
       </div>
     </div>
+    </>
   )
 }

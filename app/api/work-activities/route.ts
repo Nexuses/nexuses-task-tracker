@@ -43,11 +43,30 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create or update work activity
+// POST - Create work activity (no duplicates allowed per day)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const validatedData = workActivitySchema.parse(body)
+
+    // Check if activity already exists for this employee and date
+    let existingActivities
+    if (validatedData.employeeId) {
+      existingActivities = await getWorkActivitiesByEmployeeId(validatedData.employeeId)
+    } else {
+      existingActivities = await getWorkActivitiesByEmployee(validatedData.employeeName)
+    }
+
+    const todayActivity = existingActivities.find(
+      (activity: any) => activity.date === validatedData.date
+    )
+
+    if (todayActivity) {
+      return NextResponse.json(
+        { error: 'You have already submitted your tasks for today. Only one submission per day is allowed.' },
+        { status: 400 }
+      )
+    }
 
     const activity = await createWorkActivity(
       validatedData.employeeName,

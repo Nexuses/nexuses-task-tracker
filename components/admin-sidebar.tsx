@@ -134,7 +134,7 @@ export function AdminSidebar({ employeesByCategory }: AdminSidebarProps) {
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton 
-                          className="rounded-lg transition-all duration-200 h-11 w-full justify-between hover:bg-[#0E172B] text-slate-700 hover:text-white [&_svg]:hover:text-white"
+                          className="rounded-lg transition-all duration-200 h-11 w-full justify-between hover:!bg-[#0E172B] text-slate-700 hover:!text-white [&_svg]:hover:!text-white"
                         >
                           <div className="flex items-center gap-3 flex-1">
                             <CategoryIcon className="h-5 w-5 shrink-0" />
@@ -154,13 +154,13 @@ export function AdminSidebar({ employeesByCategory }: AdminSidebarProps) {
                                 <SidebarMenuSubButton
                                   asChild
                                   isActive={isActive}
-                                  className={`${
+                                  className={`rounded-lg transition-all duration-200 ${
                                     isActive 
-                                      ? "!bg-[#0E172B] !text-white" 
-                                      : "hover:bg-[#0E172B] hover:text-white"
+                                      ? "!bg-[#0E172B] !text-white shadow-md hover:!bg-[#0E172B] data-[active=true]:!bg-[#0E172B] data-[active=true]:!text-white" 
+                                      : "text-slate-700 hover:!bg-[#0E172B] hover:!text-white"
                                   }`}
                                 >
-                                  <Link href={employeePath} className="flex items-center gap-2">
+                                  <Link href={employeePath} className="flex items-center gap-2 w-full">
                                     <span className="text-sm">{employee.name}</span>
                                   </Link>
                                 </SidebarMenuSubButton>

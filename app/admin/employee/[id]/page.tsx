@@ -42,6 +42,7 @@ interface Task {
   notes: string
   oldTaskName?: string
   isUpdated?: boolean
+  firstWorkedOnDate?: string
   createdAt?: Date
   updatedAt?: Date
 }
@@ -123,7 +124,12 @@ export default function EmployeeDashboardPage() {
       const response = await fetch(`/api/work-activities?employeeId=${employeeId}`)
       if (response.ok) {
         const data = await response.json()
-        setWorkActivities(data.activities || [])
+        // Sort activities by date (newest first) to ensure proper display order
+        const sortedActivities = [...(data.activities || [])].sort(
+          (a: WorkActivity, b: WorkActivity) => 
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+        )
+        setWorkActivities(sortedActivities)
       }
     } catch (error) {
       console.error("Failed to fetch work activities:", error)
@@ -156,7 +162,8 @@ export default function EmployeeDashboardPage() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
+    // Use Indian locale (en-IN) for DD Month YYYY format
+    return date.toLocaleDateString('en-IN', { 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
@@ -318,13 +325,40 @@ export default function EmployeeDashboardPage() {
                     </CardContent>
                   </Card>
                 ) : (
-                  workActivities.map((activity) => (
+                  <>
+                    {/* Summary Card */}
+                    <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-slate-600">Total Work Activities</p>
+                            <p className="text-2xl font-bold text-slate-900">{workActivities.length}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-slate-600">Total Tasks</p>
+                            <p className="text-2xl font-bold text-slate-900">
+                              {workActivities.reduce((sum, activity) => sum + activity.tasks.length, 0)}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Activities by Date - Sorted by Date (Newest First) */}
+                    {[...workActivities]
+                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                      .map((activity) => (
                     <Card key={activity._id} className="border-2 border-slate-200 overflow-hidden">
                       <CardHeader className="bg-[#0E172B] border-b p-4 md:p-6">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-3">
                             <Calendar className="h-5 w-5 text-white" />
-                            <CardTitle className="text-xl text-white">{formatDate(activity.date)}</CardTitle>
+                            <div>
+                              <CardTitle className="text-xl text-white">{formatDate(activity.date)}</CardTitle>
+                              <CardDescription className="text-blue-200 text-sm mt-1">
+                                {activity.tasks.length} {activity.tasks.length === 1 ? 'task' : 'tasks'}
+                              </CardDescription>
+                            </div>
                           </div>
                           <div className="flex items-center gap-2">
                             {activity.updatedAt && activity.createdAt && 
@@ -370,7 +404,12 @@ export default function EmployeeDashboardPage() {
                                         Re-updated
                                       </Badge>
                                     )}
-                                    {task.oldTaskName && (
+                                    {task.firstWorkedOnDate && (
+                                      <span className="text-xs text-slate-500 italic">
+                                        (first worked on: {formatDate(task.firstWorkedOnDate)})
+                                      </span>
+                                    )}
+                                    {task.oldTaskName && !task.firstWorkedOnDate && (
                                       <span className="text-xs text-slate-500 italic">
                                         (was: {task.oldTaskName})
                                       </span>
@@ -402,7 +441,8 @@ export default function EmployeeDashboardPage() {
                         </Table>
                       </CardContent>
                     </Card>
-                  ))
+                      ))}
+                  </>
                 )}
               </div>
             </div>
@@ -437,7 +477,12 @@ export default function EmployeeDashboardPage() {
                         </Badge>
                       )}
                     </div>
-                    {selectedTask.oldTaskName && (
+                    {selectedTask.firstWorkedOnDate && (
+                      <p className="text-xs text-slate-500 italic mt-1">
+                        First worked on: {formatDate(selectedTask.firstWorkedOnDate)}
+                      </p>
+                    )}
+                    {selectedTask.oldTaskName && !selectedTask.firstWorkedOnDate && (
                       <p className="text-xs text-slate-500 italic mt-1">
                         Previous: {selectedTask.oldTaskName}
                       </p>

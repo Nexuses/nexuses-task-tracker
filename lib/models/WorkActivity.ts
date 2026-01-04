@@ -19,6 +19,7 @@ export interface Task {
   notes: string
   oldTaskName?: string // For tracking updates
   isUpdated?: boolean // Flag to show if task was updated
+  firstWorkedOnDate?: string // Date when this task was first worked on
   createdAt?: Date
   updatedAt?: Date
 }
@@ -109,15 +110,69 @@ export async function createWorkActivity(
 
     return { ...existingActivity, tasks: updatedTasks }
   } else {
-    // Create new activity
+    // Create new activity - check if task names were used on previous dates
+    // Get all previous activities for this employee
+    const previousActivities = await activities
+      .find({
+        $or: [
+          { employeeName },
+          ...(employeeId ? [{ employeeId }] : [])
+        ],
+        date: { $lt: date } // Only check previous dates
+      })
+      .sort({ date: -1 })
+      .toArray()
+
+    // Map to check if task names were used before
+    const previousTaskNames = new Set<string>()
+    previousActivities.forEach((prevActivity: any) => {
+      prevActivity.tasks?.forEach((task: any) => {
+        if (task.taskName) {
+          previousTaskNames.add(task.taskName.toLowerCase())
+        }
+      })
+    })
+
+    // Mark tasks as "Re-updated" if they were worked on before
+    const tasksWithHistory = tasks.map((task) => {
+      const wasWorkedOnBefore = previousTaskNames.has(task.taskName.toLowerCase())
+      
+      if (wasWorkedOnBefore) {
+        // Find the first date this task was worked on (oldest date first)
+        let firstWorkedOnDate: string | null = null
+        // Sort by date ascending to find the earliest
+        const sortedActivities = [...previousActivities].sort((a: any, b: any) => 
+          a.date.localeCompare(b.date)
+        )
+        for (const prevActivity of sortedActivities) {
+          const foundTask = prevActivity.tasks?.find(
+            (t: any) => t.taskName.toLowerCase() === task.taskName.toLowerCase()
+          )
+          if (foundTask) {
+            firstWorkedOnDate = prevActivity.date
+            break
+          }
+        }
+
+        return {
+          ...task,
+          isUpdated: true,
+          firstWorkedOnDate: firstWorkedOnDate || undefined,
+          createdAt: new Date(),
+        }
+      } else {
+        return {
+          ...task,
+          createdAt: new Date(),
+        }
+      }
+    })
+
     const activity: WorkActivity = {
       employeeName,
       employeeId: employeeId || undefined,
       date,
-      tasks: tasks.map((task) => ({
-        ...task,
-        createdAt: new Date(),
-      })),
+      tasks: tasksWithHistory,
       createdAt: new Date(),
       updatedAt: new Date(),
     }

@@ -118,8 +118,20 @@ export default function AdminDashboard() {
       const activitiesData = activitiesResponse.ok ? await activitiesResponse.json() : { activities: [] }
       const allActivities = activitiesData.activities || []
 
-      // Get today's date
-      const today = new Date().toISOString().split('T')[0]
+      // Get today's date in IST (Indian Standard Time - UTC+5:30)
+      const getTodayInIST = () => {
+        const now = new Date()
+        // Get IST date components using Asia/Kolkata timezone
+        const istFormatter = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Kolkata',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        })
+        // Returns YYYY-MM-DD format directly
+        return istFormatter.format(now)
+      }
+      const today = getTodayInIST()
       
       // Get today's activities
       const todayActivities = allActivities.filter((act: any) => act.date === today)
@@ -441,7 +453,7 @@ export default function AdminDashboard() {
                             <span className="text-slate-600 truncate flex-1">{activity.employeeName}</span>
                             <div className="flex items-center gap-2 ml-2">
                               <span className="text-xs text-slate-500">
-                                {new Date(activity.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                {new Date(activity.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
                               </span>
                               <Badge variant="secondary" className="text-xs">
                                 {activity.taskCount} tasks

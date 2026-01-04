@@ -46,8 +46,22 @@ function isWeekend(date: string): boolean {
   return day === 0 || day === 6 // Sunday or Saturday
 }
 
+// Get today's date in IST (Indian Standard Time - UTC+5:30)
+function getTodayInIST(): string {
+  const now = new Date()
+  // Get IST date components using Asia/Kolkata timezone
+  const istFormatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  })
+  // Returns YYYY-MM-DD format directly
+  return istFormatter.format(now)
+}
+
 export async function sendReminders(reminderType: 'first' | 'second' | 'final') {
-  const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
+  const today = getTodayInIST() // YYYY-MM-DD format in IST
   const employeesWithoutTasks = await getEmployeesWithoutTasks(today)
 
   const results = []

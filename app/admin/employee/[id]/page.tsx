@@ -19,7 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { LogOut, ExternalLink, Calendar, Trash2, Mail, MessageSquare } from "lucide-react"
+import { LogOut, ExternalLink, Calendar, Trash2 } from "lucide-react"
 
 interface Admin {
   _id?: string
@@ -245,72 +245,6 @@ export default function EmployeeDashboardPage() {
                       )}
                     </p>
                   </div>
-                  {employee.email && (
-                    <div className="flex gap-2 flex-shrink-0">
-                      <Button
-                        variant="outline"
-                        onClick={async () => {
-                          try {
-                            const response = await fetch('/api/reminders/test-email', {
-                              method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json',
-                              },
-                              body: JSON.stringify({
-                                employeeEmail: employee.email,
-                                employeeName: employee.name,
-                                reminderType: 'first',
-                              }),
-                            })
-                            const data = await response.json()
-                            if (response.ok) {
-                              alert('Test email sent successfully!')
-                            } else {
-                              alert(`Failed to send email: ${data.error || 'Unknown error'}`)
-                            }
-                          } catch (error) {
-                            alert('Error sending test email')
-                            console.error(error)
-                          }
-                        }}
-                        className="border-blue-300 text-blue-700 hover:bg-blue-50"
-                      >
-                        <Mail className="h-4 w-4 mr-2" />
-                        Send Test Email
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={async () => {
-                          try {
-                            const response = await fetch('/api/reminders/test-slack', {
-                              method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json',
-                              },
-                              body: JSON.stringify({
-                                employeeEmail: employee.email,
-                                employeeName: employee.name,
-                                reminderType: 'first',
-                              }),
-                            })
-                            const data = await response.json()
-                            if (response.ok) {
-                              alert('Test Slack message sent successfully!')
-                            } else {
-                              alert(`Failed to send Slack message: ${data.error || 'Unknown error'}`)
-                            }
-                          } catch (error: any) {
-                            alert(`Error sending test Slack message: ${error.message || 'Unknown error'}`)
-                            console.error(error)
-                          }
-                        }}
-                        className="border-purple-300 text-purple-700 hover:bg-purple-50"
-                      >
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                        Send Test Slack
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </div>
 

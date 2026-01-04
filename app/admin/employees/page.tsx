@@ -245,14 +245,6 @@ export default function EmployeesPage() {
                   <p className="text-slate-600 mt-2">Manage employee records and information</p>
                 </div>
                 <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={handleSeedEmployees}
-                    disabled={isSeeding}
-                    className="border-slate-300"
-                  >
-                    {isSeeding ? "Seeding..." : "Seed Employees"}
-                  </Button>
                   <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                       <Button className="bg-slate-900 text-white hover:bg-slate-800">

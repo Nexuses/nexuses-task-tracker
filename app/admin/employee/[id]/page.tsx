@@ -260,24 +260,6 @@ export default function EmployeeDashboardPage() {
                   </Card>
                 ) : (
                   <>
-                    {/* Summary Card */}
-                    <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-slate-600">Total Work Activities</p>
-                            <p className="text-2xl font-bold text-slate-900">{workActivities.length}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm text-slate-600">Total Tasks</p>
-                            <p className="text-2xl font-bold text-slate-900">
-                              {workActivities.reduce((sum, activity) => sum + activity.tasks.length, 0)}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
                     {/* Activities by Date - Sorted by Date (Newest First) */}
                     {[...workActivities]
                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -287,12 +269,9 @@ export default function EmployeeDashboardPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <Calendar className="h-5 w-5 text-white" />
-                            <div>
-                              <CardTitle className="text-xl text-white">{formatDate(activity.date)}</CardTitle>
-                              <CardDescription className="text-blue-200 text-sm mt-1">
-                                {activity.tasks.length} {activity.tasks.length === 1 ? 'task' : 'tasks'}
-                              </CardDescription>
-                            </div>
+                            <CardTitle className="text-xl text-white">
+                              {formatDate(activity.date)} • {activity.tasks.length} {activity.tasks.length === 1 ? 'task' : 'tasks'}
+                            </CardTitle>
                           </div>
                           <div className="flex items-center gap-2">
                             {activity.updatedAt && activity.createdAt && 
